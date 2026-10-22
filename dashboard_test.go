@@ -276,6 +276,15 @@ func TestETAComRelogioInjetavel(t *testing.T) {
 	if got := d.ETA(now); got != 0 {
 		t.Fatalf("ETA sem tarefas em execução = %v, quer 0", got)
 	}
+
+	// Tarefas sem total positivo não entram no cálculo do ETA.
+	semTotal := New()
+	semTotal.now = func() time.Time { return now }
+	semTotal.Add(Task{ID: "x", State: Running})
+	semTotal.Update("x", 50)
+	if got := semTotal.ETA(now.Add(time.Minute)); got != 0 {
+		t.Fatalf("ETA com Total zero = %v, quer 0", got)
+	}
 }
 
 func TestETASemProgresso(t *testing.T) {

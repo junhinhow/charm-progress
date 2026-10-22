@@ -190,6 +190,21 @@ func TestViewVazio(t *testing.T) {
 	}
 }
 
+func TestViewLarguraComUnicodeLarga(t *testing.T) {
+	d := New(WithShowETA(false))
+	d.Add(Task{ID: "a", Label: "下载文件😀 muito comprido", Total: 100, Current: 50, State: Running})
+	d.Add(Task{ID: "b", Label: "日本語のラベル", Total: 100, Current: 25, State: Running})
+
+	for _, width := range []int{8, 16, 24, 40} {
+		out := d.View(width)
+		for i, line := range strings.Split(out, "\n") {
+			if got := lipgloss.Width(line); got > width {
+				t.Fatalf("View(%d) linha %d tem largura %d: %q", width, i, got, line)
+			}
+		}
+	}
+}
+
 func TestViewSanitizaLabel(t *testing.T) {
 	d := New(WithShowETA(false))
 	d.Add(Task{ID: "a", Label: "primeira\nsegunda\tlinha", Total: 10, Current: 5})

@@ -76,3 +76,22 @@ func TestThemeSimboloPorEstado(t *testing.T) {
 		}
 	}
 }
+
+func TestTemaASCIiSimboloPorEstado(t *testing.T) {
+	theme := ASCIiTheme()
+	tests := []struct {
+		state State
+		want  string
+	}{
+		{Pending, "."},
+		{Running, ">"},
+		{Done, "+"},
+		{Failed, "x"},
+		{Cancelled, "-"},
+	}
+	for _, tt := range tests {
+		if got := theme.symbol(tt.state); got != tt.want {
+			t.Fatalf("symbol(%d) = %q, quer %q", tt.state, got, tt.want)
+		}
+	}
+}
