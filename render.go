@@ -177,8 +177,14 @@ func (d *Dashboard) suffix(t Task, counts bool) string {
 func (d *Dashboard) summary(width int) string {
 	label := d.theme.Label.Render("total")
 	percent := d.theme.Muted.Render(formatPercent(d.Overall()))
+	baseWidth := lipgloss.Width(label) + 1 + lipgloss.Width(percent)
 
 	var extra string
+	addExtra := func(candidate string) {
+		if baseWidth+lipgloss.Width(extra)+lipgloss.Width(candidate) <= width {
+			extra += candidate
+		}
+	}
 	if d.showCounts {
 		done := 0
 		for _, t := range d.tasks {
@@ -190,17 +196,17 @@ func (d *Dashboard) summary(width int) string {
 		if len(d.tasks) == 1 {
 			word = "tarefa"
 		}
-		extra += "  " + d.theme.Muted.Render(fmt.Sprintf("%d/%d %s", done, len(d.tasks), word))
+		addExtra("  " + d.theme.Muted.Render(fmt.Sprintf("%d/%d %s", done, len(d.tasks), word)))
 	}
 	if d.showETA {
 		if eta := d.ETA(d.clock()); eta > 0 {
-			extra += "  " + d.theme.Muted.Render("ETA "+formatDuration(eta))
+			addExtra("  " + d.theme.Muted.Render("ETA "+formatDuration(eta)))
 		}
 	}
 
 	barW := 0
 	if width >= 32 {
-		used := lipgloss.Width(label) + 1 + lipgloss.Width(percent) + lipgloss.Width(extra)
+		used := baseWidth + lipgloss.Width(extra)
 		if room := width - used - 1; room >= 5 {
 			barW = d.barWidth
 			if barW > room {
@@ -213,8 +219,7 @@ func (d *Dashboard) summary(width int) string {
 	if barW >= 5 {
 		line += " " + d.bar(d.Overall(), barW)
 	}
-	line += " " + percent
-	line = appendIfFits(line, extra, width)
+	line += " " + percent + extra
 	return ansi.Truncate(line, width, "")
 }
 
@@ -282,14 +287,6 @@ func formatDuration(d time.Duration) string {
 	days := int(d / (24 * time.Hour))
 	hours := int((d % (24 * time.Hour)) / time.Hour)
 	return fmt.Sprintf("%dd%02dh", days, hours)
-}
-
-// appendIfFits acrescenta extra somente se a linha continuar dentro de width.
-func appendIfFits(line, extra string, width int) string {
-	if lipgloss.Width(line)+lipgloss.Width(extra) > width {
-		return line
-	}
-	return line + extra
 }
 
 // truncate corta s em width colunas, usando tail apenas quando ele cabe.
