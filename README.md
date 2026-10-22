@@ -144,9 +144,10 @@ total ########--  80%  1/2 tarefas
 
 - **Deterministic order.** Tasks live in a slice; the ID map is used only for lookup. Rendering never iterates a map.
 - **Aggregate progress.** `Overall` is `sum(current) / sum(total)` over tasks with `Total > 0`, clamped to 0–100. If every total is zero, it is the share of `Done` tasks. Failed and cancelled tasks contribute the progress they reached, not 100%.
-- **ETA.** The first `Update` records `startedAt`. `ETA(now)` uses the progress of `Running` tasks with a positive total and the elapsed time since that mark. It returns `0` when there is no running task, no elapsed time, or no measured progress. Pass your own clock to keep tests deterministic; `View` uses `time.Now`.
+- **ETA.** The first `Update` records `startedAt`. `ETA(now)` uses the progress of `Running` tasks with a positive total and the elapsed time since that mark, assuming a constant rate. It returns `0` when there is no running task, no elapsed time, or no measured progress. Pass your own clock to keep tests deterministic; `View` uses `time.Now`.
 - **Width discipline.** Widths are measured with `lipgloss.Width` and lines are cut with `ansi.Truncate`; `View(0)` and negative widths return `""`. On narrow terminals the layout first drops numeric counts that would hide the bar, then the bar itself, then falls back to symbol + percentage. No line ever exceeds the requested width.
 - **Labels.** Control characters (including newlines and ANSI escapes) become spaces, so one task always occupies one line. Unicode labels are preserved as-is.
+- **Fixed summary text.** The summary words are currently Portuguese (`total`, `tarefas`, `ETA`); only task labels are caller-provided. This keeps the package dependency-free and matches the rest of the suite.
 - **Single goroutine.** The dashboard has no locks and no background goroutines. Drive it from one goroutine (or guard it yourself) and re-render when convenient.
 - **ASCII fallback.** `ASCIiTheme` uses `#`/`-` and `. > + x -` for states, with no non-ASCII glyphs. It does not transliterate user labels.
 - **No I/O.** The package never writes to stdout, never starts timers and never downloads anything; it only holds state and renders strings. The name's odd capitalization (`ASCIiTheme`) is part of the public API.
